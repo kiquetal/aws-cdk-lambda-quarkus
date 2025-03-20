@@ -19,12 +19,31 @@ export class AwsCdkLambdaQuarkusStack extends cdk.Stack {
       functionName: 'quarkus-lambda',
       runtime: aws_lambda.Runtime.JAVA_17,
       handler: "io.quarkus.amazon.lambda.runtime.QuarkusStreamHandler::handleRequest",
-        code: aws_lambda.Code.fromAsset(path.join(__dirname, '..', 'lambda-pom/quarkus-lambda/target/function.zip')),
+        code: aws_lambda.Code.fromAsset(path.join(__dirname, '..', 'lambda-pom/quarkus-lambda/zipped/function-jvm.zip')),
     });
+
+    const lambdaNative = new aws_lambda.Function(this, 'lambda-lambda-native',{
+      functionName: 'quarkus-lambda-native',
+      runtime: aws_lambda.Runtime.PROVIDED_AL2023,
+      handler: 'bootstrap',
+     code: aws_lambda.Code.fromAsset(path.join(__dirname, '..', 'lambda-pom/quarkus-lambda/zipped/function-native.zip')),
+     }  );
+
+
+
+
     new CfnOutput(this,
         'LambdaName',
         {
             value: lambdaJava.functionArn
         })
+
+    new CfnOutput(this,
+        'LambdaNameNative',
+        {
+            value: lambdaNative.functionArn
+        })
+
+
   }
 }

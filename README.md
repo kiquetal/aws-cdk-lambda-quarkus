@@ -18,3 +18,22 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 cdk2 deploy --profile devKiquetal
 
 sam local invoke -t lambda-pom/quarkus-lambda/target/sam.jvm.yaml -e lambda-pom/quarkus-lambda/payload.json 
+
+## To create the native run
+
+mvn package -Pnative 
+
+## To create the jar
+
+mvn package
+
+## I moved the function.zip from target to folder zipped
+
+Testing directly using aws-cli
+
+aws lambda invoke outputjson --function-name quarkus-lambda-native --payload fileb://payload.json  --profile devKiquetal
+{
+    "StatusCode": 200,
+    "ExecutedVersion": "$LATEST"
+}
+
