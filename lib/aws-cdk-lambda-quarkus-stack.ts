@@ -1,5 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import {aws_lambda, CfnOutput} from "aws-cdk-lib";
+import * as path from "node:path";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class AwsCdkLambdaQuarkusStack extends cdk.Stack {
@@ -12,5 +14,17 @@ export class AwsCdkLambdaQuarkusStack extends cdk.Stack {
     // const queue = new sqs.Queue(this, 'AwsCdkLambdaQuarkusQueue', {
     //   visibilityTimeout: cdk.Duration.seconds(300)
     // });
+
+    const lambdaJava = new aws_lambda.Function(this, 'lambda-lambda',{
+      functionName: 'quarkus-lambda',
+      runtime: aws_lambda.Runtime.JAVA_17,
+      handler: "io.quarkus.amazon.lambda.runtime.QuarkusStreamHandler::handleRequest",
+        code: aws_lambda.Code.fromAsset(path.join(__dirname, '..', 'lambda-pom/quarkus-lambda/target/function.zip')),
+    });
+    new CfnOutput(this,
+        'LambdaName',
+        {
+            value: lambdaJava.functionArn
+        })
   }
 }
