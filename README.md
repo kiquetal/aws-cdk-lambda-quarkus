@@ -84,3 +84,12 @@ Resources:
 ## To join the network of localstack use the following
 
 samlocal local invoke -t target/sam.jvm.yaml -e payload.json --docker-network ls --add-host localhost.localstack.cloud:172.25.0.2
+
+
+## Execute localstack with network
+
+localstack start -d --network ls
+
+## Obtaint the ip
+
+docker inspect localstack-main |  jq -r '.[0].NetworkSettings.Networks | to_entries | .[].value.IPAddress'
