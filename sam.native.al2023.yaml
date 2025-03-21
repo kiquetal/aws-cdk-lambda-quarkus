@@ -19,3 +19,4 @@ Resources:
       Environment:
         Variables:
           DISABLE_SIGNAL_HANDLERS: true
+          QUARKUS_LAMBDA_HANDLER: two

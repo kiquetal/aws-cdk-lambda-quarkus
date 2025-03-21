@@ -1,0 +1,5 @@
+{
+  "QuarkusLambdaNative": {
+    "QUARKUS_LAMBDA_HANDLER": "unused"
+  }
+}
