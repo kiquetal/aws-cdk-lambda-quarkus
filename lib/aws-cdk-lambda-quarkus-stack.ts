@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import {aws_lambda, CfnOutput} from "aws-cdk-lib";
+import {aws_iam, aws_lambda, CfnOutput} from "aws-cdk-lib";
 import * as path from "node:path";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
@@ -26,11 +26,22 @@ export class AwsCdkLambdaQuarkusStack extends cdk.Stack {
       functionName: 'quarkus-lambda-native',
       runtime: aws_lambda.Runtime.PROVIDED_AL2023,
       handler: 'bootstrap',
-     code: aws_lambda.Code.fromAsset(path.join(__dirname, '..', 'lambda-pom/quarkus-lambda/zipped/function-native.zip')),
+      code: aws_lambda.Code.fromAsset(path.join(__dirname, '..', 'lambda-pom/quarkus-lambda/zipped/function-native.zip')),
+        environment: {
+          "DISABLE_SIGNAL_HANDLERS": "true", "QUARKUS_LAMBDA_HANDLER": "s3"
+
+        }
      }  );
 
-
-
+   const roleOfLambda = lambdaNative.role
+      roleOfLambda?.attachInlinePolicy(new aws_iam.Policy(this, 'ListBucketsPolicy', {
+          statements: [
+              new aws_iam.PolicyStatement({
+                  actions: ['s3:ListAllMyBuckets'],
+                  resources: ['*'],
+              }),
+          ],
+      }));
 
     new CfnOutput(this,
         'LambdaName',
