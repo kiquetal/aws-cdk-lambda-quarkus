@@ -93,3 +93,21 @@ localstack start -d --network ls
 ## Obtaint the ip
 
 docker inspect localstack-main |  jq -r '.[0].NetworkSettings.Networks | to_entries | .[].value.IPAddress'
+
+## Ensure to change the runtime from target/sam.native.yaml to use provided.al2023
+
+```yaml
+Resources:
+  QuarkusLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: not-used-in-native
+      Runtime: provided.al2023
+      CodeUri: function.zip
+      MemorySize: 256
+      Timeout: 15
+      Policies: AWSLambdaBasicExecutionRole
+      Environment:
+        Variables:
+          QUARKUS_LAMBDA_HANDLER: test
+```

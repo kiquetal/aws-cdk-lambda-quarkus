@@ -6,6 +6,7 @@ import jakarta.inject.Named;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.profiles.ProfileFile;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -21,6 +22,7 @@ public class StorageLambda implements RequestHandler<InputObject, OutputObject>
         OutputObject out = new OutputObject();
 
         S3Client s3Client = S3Client.builder()
+                .httpClientBuilder(ApacheHttpClient.builder())
                         .region(Region.US_EAST_1)
                            //     .endpointOverride(URI.create("http://localhost:4566"))
                 .endpointOverride(URI.create("http://localhost.localstack.cloud:4566"))
