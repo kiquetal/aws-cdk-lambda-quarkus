@@ -1,5 +1,5 @@
 {
   "QuarkusLambdaNative": {
-    "QUARKUS_LAMBDA_HANDLER": "unused"
+    "QUARKUS_LAMBDA_HANDLER": "test"
   }
 }
