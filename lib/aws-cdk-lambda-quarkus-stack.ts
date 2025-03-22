@@ -27,7 +27,7 @@ export class AwsCdkLambdaQuarkusStack extends cdk.Stack {
       runtime: aws_lambda.Runtime.PROVIDED_AL2023,
       handler: 'bootstrap',
        architecture: aws_lambda.Architecture.ARM_64,
-      code: aws_lambda.Code.fromAsset(path.join(__dirname, '..', 'lambda-pom/quarkus-lambda/zipped/function-native.zip')),
+      code: aws_lambda.Code.fromAsset(path.join(__dirname, '..', 'lambda-pom/quarkus-lambda/zipped/function-native-arm.zip')),
         environment: {
           "DISABLE_SIGNAL_HANDLERS": "true", "QUARKUS_LAMBDA_HANDLER": "s3"
 
