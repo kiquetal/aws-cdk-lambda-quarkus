@@ -111,3 +111,22 @@ Resources:
         Variables:
           QUARKUS_LAMBDA_HANDLER: test
 ```
+
+### To compile to arm64
+
+```shell
+
+mvn clean package -Pnative -Dquarkus.native.container-runtime=docker -DskipTests
+
+```
+
+### Use the following properties in application.properties
+
+```properties
+
+quarkus.lambda.handler=${QUARKUS_LAMBDA_HANDLER:s3}
+quarkus.ssl.native=true
+quarkus.native.additional-build-args=--initialize-at-run-time=org.apache.http.impl.auth.NTLMEngineImpl
+quarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image:23.1.6.0-Final-java21-arm64
+
+```
