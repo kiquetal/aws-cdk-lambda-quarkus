@@ -1,47 +1,221 @@
-# Welcome to your CDK TypeScript project
+# AWS CDK Lambda Quarkus Project
 
-This is a blank project for CDK development with TypeScript.
+![Quarkus](https://img.shields.io/badge/Quarkus-FF004B?style=for-the-badge&logo=quarkus&logoColor=white)
+![AWS Lambda](https://img.shields.io/badge/AWS_Lambda-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+
+This project demonstrates how to deploy a Quarkus application as an AWS Lambda function using AWS CDK with TypeScript.
+
+## 📋 Table of Contents
+
+- [Project Overview](#project-overview)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
+- [Building the Quarkus Application](#building-the-quarkus-application)
+- [Deploying with AWS CDK](#deploying-with-aws-cdk)
+- [Deploying with AWS CLI](#deploying-with-aws-cli)
+- [Testing the Lambda Function](#testing-the-lambda-function)
+- [LocalStack Integration](#localstack-integration)
+- [Configuration Options](#configuration-options)
+
+## 🔍 Project Overview
+
+This project uses AWS CDK with TypeScript to define and provision AWS infrastructure for deploying a Quarkus application as a Lambda function. The Quarkus application can be deployed in different modes:
+
+- **JVM Mode**: Traditional Java deployment
+- **Native Mode**: GraalVM native image for faster startup and lower memory usage
+- **Native ARM64 Mode**: Native image optimized for ARM64 architecture
 
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
-## Useful commands
+## 🛠️ Prerequisites
 
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `npx cdk deploy`  deploy this stack to your default AWS account/region
-* `npx cdk diff`    compare deployed stack with current state
-* `npx cdk synth`   emits the synthesized CloudFormation template
+- Node.js and npm
+- AWS CLI configured with appropriate credentials
+- Maven
+- Java 17 or later
+- GraalVM (for native builds)
+- Docker (for native builds with container)
+- AWS SAM CLI (for local testing)
 
-## Running the cdk-app
+## 🚀 Getting Started
 
-cdk2 deploy --profile devKiquetal
+### CDK Useful Commands
 
-sam local invoke -t lambda-pom/quarkus-lambda/target/sam.jvm.yaml -e lambda-pom/quarkus-lambda/payload.json 
+* `npm run build` - Compile TypeScript to JavaScript
+* `npm run watch` - Watch for changes and compile
+* `npm run test` - Perform the Jest unit tests
+* `npx cdk deploy` - Deploy this stack to your default AWS account/region
+* `npx cdk diff` - Compare deployed stack with current state
+* `npx cdk synth` - Emits the synthesized CloudFormation template
 
-## To create the native run
+### Running the CDK App
 
-mvn package -Pnative 
+```bash
+cdk2 deploy --profile yourProfileName
+```
 
-## To create the jar
+## 🏗️ Building the Quarkus Application
 
+### Creating a JAR (JVM Mode)
+
+```bash
 mvn package
+```
 
-## I moved the function.zip from target to folder zipped
+### Creating a Native Executable
 
-Testing directly using aws-cli
+```bash
+mvn package -Pnative
+```
 
-aws lambda invoke outputjson --function-name quarkus-lambda-native --payload fileb://payload.json  --profile devKiquetal
+### Creating a Native Executable for ARM64
+
+```bash
+mvn clean package -Pnative -Dquarkus.native.container-runtime=docker -DskipTests
+```
+
+> **Note**: After building, the `function.zip` file from the target directory should be moved to a folder named `zipped` for deployment.
+
+## 🚢 Deploying with AWS CDK
+
+The project includes CDK code to deploy the Quarkus Lambda function. The deployment process is handled by the CDK stack defined in the `lib` directory.
+
+To deploy using CDK:
+
+```bash
+npm run build
+npx cdk deploy
+```
+
+## 🚢 Deploying with AWS CLI
+
+You can deploy your Quarkus Lambda function directly using the AWS CLI. This section outlines the steps for different deployment options.
+
+### JVM Mode Deployment
+
+1. **Build the JVM package**:
+   ```bash
+   mvn package
+   ```
+
+2. **Create the Lambda function**:
+   ```bash
+   aws lambda create-function \
+     --function-name quarkus-lambda-jvm \
+     --zip-file fileb://lambda-pom/quarkus-lambda/target/function.zip \
+     --handler io.quarkus.amazon.lambda.runtime.QuarkusStreamHandler::handleRequest \
+     --runtime java17 \
+     --role arn:aws:iam::your-account-id:role/lambda-role \
+     --memory-size 256 \
+     --timeout 15 \
+     --environment Variables={QUARKUS_LAMBDA_HANDLER=test}
+   ```
+
+### Native Mode Deployment
+
+1. **Build the native package**:
+   ```bash
+   mvn package -Pnative
+   ```
+
+2. **Create the Lambda function**:
+   ```bash
+   aws lambda create-function \
+     --function-name quarkus-lambda-native \
+     --zip-file fileb://lambda-pom/quarkus-lambda/target/function.zip \
+     --handler not.used.in.provided.runtime \
+     --runtime provided.al2023 \
+     --role arn:aws:iam::your-account-id:role/lambda-role \
+     --memory-size 128 \
+     --timeout 15 \
+     --environment Variables={DISABLE_SIGNAL_HANDLERS=true,QUARKUS_LAMBDA_HANDLER=two}
+   ```
+
+### Native ARM64 Mode Deployment
+
+1. **Build the native ARM64 package**:
+   ```bash
+   mvn clean package -Pnative -Dquarkus.native.container-runtime=docker -DskipTests
+   ```
+
+2. **Create the Lambda function**:
+   ```bash
+   aws lambda create-function \
+     --function-name quarkus-lambda-native-arm \
+     --zip-file fileb://lambda-pom/quarkus-lambda/target/function.zip \
+     --handler not.used.in.provided.runtime \
+     --runtime provided.al2023 \
+     --architectures arm64 \
+     --role arn:aws:iam::your-account-id:role/lambda-role \
+     --memory-size 128 \
+     --timeout 15 \
+     --environment Variables={DISABLE_SIGNAL_HANDLERS=true}
+   ```
+
+### Updating an Existing Function
+
+```bash
+aws lambda update-function-code \
+  --function-name quarkus-lambda-native \
+  --zip-file fileb://lambda-pom/quarkus-lambda/target/function.zip
+```
+
+## 🧪 Testing the Lambda Function
+
+### Testing Locally with SAM
+
+```bash
+sam local invoke -t lambda-pom/quarkus-lambda/target/sam.jvm.yaml -e lambda-pom/quarkus-lambda/payload.json
+```
+
+### Testing Directly with AWS CLI
+
+```bash
+aws lambda invoke outputjson --function-name quarkus-lambda-native --payload fileb://payload.json --profile yourProfileName
+```
+
+Expected output:
+```json
 {
     "StatusCode": 200,
     "ExecutedVersion": "$LATEST"
 }
+```
 
-## Variable of quarkus
+## 🔄 LocalStack Integration
 
+For local development and testing, you can use LocalStack to emulate AWS services.
+
+### Starting LocalStack with Network
+
+```bash
+localstack start -d --network ls
+```
+
+### Getting the LocalStack IP
+
+```bash
+docker inspect localstack-main | jq -r '.[0].NetworkSettings.Networks | to_entries | .[].value.IPAddress'
+```
+
+### Invoking Lambda with LocalStack
+
+```bash
+samlocal local invoke -t target/sam.jvm.yaml -e payload.json --docker-network ls --add-host localhost.localstack.cloud:172.25.0.2
+```
+
+## ⚙️ Configuration Options
+
+### Quarkus Lambda Handler
+
+You can specify the Lambda handler using an environment variable:
+
+```bash
 QUARKUS_LAMBDA_HANDLER=s3 mvn install -DskipTests
+```
 
-## SAM to dynamic select the handler
+### SAM Template for Dynamic Handler Selection
 
 ```yaml
 AWSTemplateFormatVersion: '2010-09-09'
@@ -66,67 +240,29 @@ Resources:
       Environment:
         Variables:
           QUARKUS_LAMBDA_HANDLER: test
-
-
 ```
-### The env json only override does not create environment variable
 
-```yaml
+### Environment Variables Override
+
+```json
 {
-"QuarkusLambda": {
-"QUARKUS_LAMBDA_HANDLER": "test"
+  "QuarkusLambda": {
+    "QUARKUS_LAMBDA_HANDLER": "test"
+  }
 }
-}
-
 ```
 
-
-## To join the network of localstack use the following
-
-samlocal local invoke -t target/sam.jvm.yaml -e payload.json --docker-network ls --add-host localhost.localstack.cloud:172.25.0.2
-
-
-## Execute localstack with network
-
-localstack start -d --network ls
-
-## Obtaint the ip
-
-docker inspect localstack-main |  jq -r '.[0].NetworkSettings.Networks | to_entries | .[].value.IPAddress'
-
-## Ensure to change the runtime from target/sam.native.yaml to use provided.al2023
-
-```yaml
-Resources:
-  QuarkusLambda:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: not-used-in-native
-      Runtime: provided.al2023
-      CodeUri: function.zip
-      MemorySize: 256
-      Timeout: 15
-      Policies: AWSLambdaBasicExecutionRole
-      Environment:
-        Variables:
-          QUARKUS_LAMBDA_HANDLER: test
-```
-
-### To compile to arm64
-
-```shell
-
-mvn clean package -Pnative -Dquarkus.native.container-runtime=docker -DskipTests
-
-```
-
-### Use the following properties in application.properties
+### Application Properties
 
 ```properties
-
 quarkus.lambda.handler=${QUARKUS_LAMBDA_HANDLER:s3}
 quarkus.ssl.native=true
 quarkus.native.additional-build-args=--initialize-at-run-time=org.apache.http.impl.auth.NTLMEngineImpl
 quarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image:23.1.6.0-Final-java21-arm64
-
 ```
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
