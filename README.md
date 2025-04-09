@@ -11,6 +11,8 @@ This project demonstrates how to deploy a Quarkus application as an AWS Lambda f
 - [Project Overview](#project-overview)
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
+  - [Enabling QEMU for Docker Multi-Architecture Support](#enabling-qemu-for-docker-multi-architecture-support)
+  - [CDK Useful Commands](#cdk-useful-commands)
 - [Building the Quarkus Application](#building-the-quarkus-application)
 - [Deploying with AWS CDK](#deploying-with-aws-cdk)
 - [Deploying with AWS CLI](#deploying-with-aws-cli)
@@ -37,8 +39,59 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 - GraalVM (for native builds)
 - Docker (for native builds with container)
 - AWS SAM CLI (for local testing)
+- QEMU (for multi-architecture builds)
 
 ## 🚀 Getting Started
+
+### Enabling QEMU for Docker Multi-Architecture Support
+
+To build and run containers for different CPU architectures (like x86_64 and ARM64) on a single host, you need to enable QEMU in Docker. This is essential for cross-platform development and testing, especially when building native ARM64 images on x86_64 machines.
+
+#### Linux
+
+```bash
+# Install QEMU packages
+sudo apt-get update
+sudo apt-get install -y qemu-user-static binfmt-support
+
+# Register QEMU in the build agent
+docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+```
+
+#### macOS
+
+```bash
+# QEMU is included with Docker Desktop for Mac
+# Just make sure you have the latest version of Docker Desktop installed
+
+# Verify QEMU is working
+docker run --rm --platform=linux/arm64 arm64v8/ubuntu uname -m
+# Should output: aarch64
+```
+
+#### Windows
+
+```bash
+# QEMU is included with Docker Desktop for Windows
+# Make sure you have the latest version of Docker Desktop installed with WSL2 backend
+
+# Verify QEMU is working
+docker run --rm --platform=linux/arm64 arm64v8/ubuntu uname -m
+# Should output: aarch64
+```
+
+#### Verifying QEMU Installation
+
+To verify that QEMU is properly set up, run:
+
+```bash
+# Check if you can run ARM64 containers on x86_64 host (or vice versa)
+docker run --rm --platform=linux/arm64 arm64v8/alpine uname -m
+# Should output: aarch64
+
+docker run --rm --platform=linux/amd64 amd64/alpine uname -m
+# Should output: x86_64
+```
 
 ### CDK Useful Commands
 
@@ -134,6 +187,8 @@ You can deploy your Quarkus Lambda function directly using the AWS CLI. This sec
 
 ### Native ARM64 Mode Deployment
 
+> **Important**: Make sure you have enabled QEMU for Docker multi-architecture support as described in the [Enabling QEMU for Docker Multi-Architecture Support](#enabling-qemu-for-docker-multi-architecture-support) section before proceeding with ARM64 builds.
+
 1. **Build the native ARM64 package**:
    ```bash
    mvn clean package -Pnative -Dquarkus.native.container-runtime=docker -DskipTests
@@ -167,6 +222,40 @@ aws lambda update-function-code \
 
 ```bash
 sam local invoke -t lambda-pom/quarkus-lambda/target/sam.jvm.yaml -e lambda-pom/quarkus-lambda/payload.json
+```
+
+#### With Environment Variables
+
+You can pass environment variables to your Lambda function when testing locally with SAM using the `--env-vars` option:
+
+```bash
+sam local invoke -t lambda-pom/quarkus-lambda/target/sam.jvm.yaml -e lambda-pom/quarkus-lambda/payload.json --env-vars lambda-pom/quarkus-lambda/env.json
+```
+
+The env.json file should have the following format:
+
+```json
+{
+  "FunctionName": {
+    "ENVIRONMENT_VARIABLE_NAME": "value"
+  }
+}
+```
+
+For example, to set the `QUARKUS_LAMBDA_HANDLER` to use the "test" handler:
+
+```json
+{
+  "QuarkusLambda": {
+    "QUARKUS_LAMBDA_HANDLER": "test"
+  }
+}
+```
+
+You can also specify environment variables directly on the command line:
+
+```bash
+sam local invoke -t lambda-pom/quarkus-lambda/target/sam.jvm.yaml -e lambda-pom/quarkus-lambda/payload.json --parameter-overrides ParameterKey=QUARKUS_LAMBDA_HANDLER,ParameterValue=test
 ```
 
 ### Testing Directly with AWS CLI
@@ -203,6 +292,20 @@ docker inspect localstack-main | jq -r '.[0].NetworkSettings.Networks | to_entri
 
 ```bash
 samlocal local invoke -t target/sam.jvm.yaml -e payload.json --docker-network ls --add-host localhost.localstack.cloud:172.25.0.2
+```
+
+#### With Environment Variables
+
+You can also pass environment variables when using LocalStack:
+
+```bash
+samlocal local invoke -t target/sam.jvm.yaml -e payload.json --docker-network ls --add-host localhost.localstack.cloud:172.25.0.2 --env-vars lambda-pom/quarkus-lambda/env.json
+```
+
+Or directly on the command line:
+
+```bash
+samlocal local invoke -t target/sam.jvm.yaml -e payload.json --docker-network ls --add-host localhost.localstack.cloud:172.25.0.2 --parameter-overrides ParameterKey=QUARKUS_LAMBDA_HANDLER,ParameterValue=test
 ```
 
 ## ⚙️ Configuration Options
