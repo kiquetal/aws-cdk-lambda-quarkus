@@ -272,6 +272,91 @@ Expected output:
 }
 ```
 
+## 📄 SAM Templates
+
+This project includes SAM (Serverless Application Model) templates for different deployment scenarios. These templates define the Lambda function configuration and are used for both local testing and deployment.
+
+### JVM Mode Template
+
+This template is used for deploying the Quarkus application in JVM mode, as shown earlier in the testing section.
+
+### Native Mode Template (Amazon Linux 2023)
+
+This template is for deploying Quarkus native executables on Amazon Linux 2023 (x86_64 architecture):
+
+```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS Serverless Quarkus Native (AL2023) - quarkus-amazon-lambda
+Globals:
+  Api:
+    EndpointConfiguration: REGIONAL
+    BinaryMediaTypes:
+      - "*/*"
+
+Resources:
+  QuarkusLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: not.used.in.provided.runtime
+      Runtime: provided.al2023
+      CodeUri: function.zip
+      MemorySize: 128
+      Timeout: 15
+      Policies: AWSLambdaBasicExecutionRole
+      Environment:
+        Variables:
+          DISABLE_SIGNAL_HANDLERS: true
+          QUARKUS_LAMBDA_HANDLER: test
+```
+
+### Native ARM64 Mode Template (Amazon Linux 2023)
+
+This template is specialized for deploying Quarkus native executables on Amazon Linux 2023 with ARM64 architecture, which can provide better performance and cost efficiency on AWS Graviton processors:
+
+```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS Serverless Quarkus Native ARM64 (AL2023) - quarkus-amazon-lambda
+Globals:
+  Api:
+    EndpointConfiguration: REGIONAL
+    BinaryMediaTypes:
+      - "*/*"
+
+Resources:
+  QuarkusLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: not.used.in.provided.runtime
+      Runtime: provided.al2023
+      Architectures:
+        - arm64
+      CodeUri: function.zip
+      MemorySize: 128
+      Timeout: 15
+      Policies: AWSLambdaBasicExecutionRole
+      Environment:
+        Variables:
+          DISABLE_SIGNAL_HANDLERS: true
+          QUARKUS_LAMBDA_HANDLER: test
+```
+
+### Testing with SAM Templates
+
+You can use these templates for local testing with the SAM CLI:
+
+```bash
+# Test with JVM mode template
+sam local invoke -t lambda-pom/quarkus-lambda/target/sam.jvm.yaml -e lambda-pom/quarkus-lambda/payload.json
+
+# Test with native mode template
+sam local invoke -t lambda-pom/quarkus-lambda/target/sam.native.al2023.yaml -e lambda-pom/quarkus-lambda/payload.json
+
+# Test with native ARM64 mode template
+sam local invoke -t lambda-pom/quarkus-lambda/target/sam.native.al2023-arm.yaml -e lambda-pom/quarkus-lambda/payload.json
+```
+
 ## 🔄 LocalStack Integration
 
 For local development and testing, you can use LocalStack to emulate AWS services.
