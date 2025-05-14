@@ -32,6 +32,7 @@ jobs:
       - name: Build with Maven and GraalVM Native Image
         run: |
           cd lambda-pom/quarkus-lambda
+          docker buildx create --use --platform linux/amd64
           mvn package -Pnative -DskipTests -Dquarkus.native.container-build=true
 
       - name: Upload native executable
