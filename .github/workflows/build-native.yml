@@ -42,7 +42,7 @@ jobs:
           retention-days: 7
 
       - name: Upload function.zip for AWS Lambda
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: lambda-function-package
           path: lambda-pom/quarkus-lambda/target/function.zip
