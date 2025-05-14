@@ -1,0 +1,49 @@
+name: Build Native Executable
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Native Executable
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '17'
+          distribution: 'graalvm-community'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+
+      - name: Build with Maven and GraalVM Native Image
+        run: |
+          cd lambda-pom/quarkus-lambda
+          mvn package -Pnative -DskipTests
+
+      - name: Upload native executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: quarkus-lambda-native-executable
+          path: lambda-pom/quarkus-lambda/target/*-runner
+          retention-days: 7
+
+      - name: Upload function.zip for AWS Lambda
+        uses: actions/upload-artifact@v3
+        with:
+          name: lambda-function-package
+          path: lambda-pom/quarkus-lambda/target/function.zip
+          retention-days: 7
