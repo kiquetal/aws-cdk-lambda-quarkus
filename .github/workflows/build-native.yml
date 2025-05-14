@@ -32,7 +32,7 @@ jobs:
       - name: Build with Maven and GraalVM Native Image
         run: |
           cd lambda-pom/quarkus-lambda
-          mvn package -Pnative -DskipTests
+          mvn package -Pnative -DskipTests -Dquarkus.native.container-build=true
 
       - name: Upload native executable
         uses: actions/upload-artifact@v4
