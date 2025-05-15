@@ -1,0 +1,58 @@
+name: Build JVM JAR
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build JVM JAR
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build with Maven (JVM mode)
+        run: |
+          cd lambda-pom/quarkus-lambda
+          mvn package -DskipTests
+
+      - name: Prepare artifact directory
+        run: |
+          mkdir -p artifact_dir
+          cp lambda-pom/quarkus-lambda/target/quarkus-app/lib/boot/*.jar artifact_dir/bootstrap.jar
+          cp lambda-pom/quarkus-lambda/target/quarkus-app/quarkus-run.jar artifact_dir/
+          cp -r lambda-pom/quarkus-lambda/target/quarkus-app/lib/ artifact_dir/lib/
+          cp -r lambda-pom/quarkus-lambda/target/quarkus-app/app/ artifact_dir/app/
+          cp -r lambda-pom/quarkus-lambda/target/quarkus-app/quarkus/ artifact_dir/quarkus/
+
+      - name: Upload quarkus-run.jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: quarkus-run-jar
+          path: artifact_dir/quarkus-run.jar
+          retention-days: 7
+
+      - name: Upload complete JVM package
+        uses: actions/upload-artifact@v4
+        with:
+          name: quarkus-lambda-jvm-package
+          path: artifact_dir/
+          retention-days: 7
+
+      - name: Create deployable ZIP
+        run: |
+          cd artifact_dir
+          zip -r ../function-jvm.zip .
+
+      - name: Upload function.zip for AWS Lambda
+        uses: actions/upload-artifact@v4
+        with:
+          name: function-jvm.zip
+          path: function-jvm.zip
+          retention-days: 7
