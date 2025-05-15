@@ -4,7 +4,7 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /work/
 
 # Copy the Quarkus Lambda runner and dependencies
-COPY target/quarkus-lambda/target/quarkus-lambda-1.0-SNAPSHOT-runner.jar /work/
+COPY target/quarkus-lambda-1.0-SNAPSHOT-runner.jar /work/
 
 # Expose the default Lambda port (8080 is common, adjust if needed)
 EXPOSE 8080
