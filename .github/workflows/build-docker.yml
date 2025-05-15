@@ -29,17 +29,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build Quarkus application
         run: |
           cd lambda-pom/quarkus-lambda
-          # Override the version tag if provided through workflow dispatch
-          mvn package -DskipTests \
-            -Dquarkus.container-image.registry=ghcr.io \
-            -Dquarkus.container-image.group=${{ github.repository_owner }} \
-            -Dquarkus.container-image.tag=${{ github.event.inputs.version || 'latest' }} \
-            -Dquarkus.container-image.push=true
-            
+          mvn package -DskipTests
+
+      - name: Build Docker image
+        run: |
+          cd lambda-pom/quarkus-lambda
+          docker build -f src/main/docker/Dockerfile.jvm -t ghcr.io/${{ github.repository_owner }}/quarkus-lambda:${{ github.event.inputs.version }} .
+
+      - name: Push Docker image
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/quarkus-lambda:${{ github.event.inputs.version }}
+
       - name: Summary
         run: |
           echo "## Docker Image Built and Pushed" >> $GITHUB_STEP_SUMMARY
-          echo "Image: ghcr.io/${{ github.repository_owner }}/quarkus-lambda:${{ github.event.inputs.version || 'latest' }}" >> $GITHUB_STEP_SUMMARY
+          echo "Image: ghcr.io/${{ github.repository_owner }}/quarkus-lambda:${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
+
