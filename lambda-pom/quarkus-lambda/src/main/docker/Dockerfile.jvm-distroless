@@ -1,0 +1,16 @@
+# Use a distroless Java 17 image
+FROM gcr.io/distroless/java17-debian11
+
+WORKDIR /work/
+
+# Copy the Quarkus JVM runner and dependencies
+COPY target/quarkus-app/lib/ /work/lib/
+COPY target/quarkus-app/*.jar /work/
+COPY target/quarkus-app/app/ /work/app/
+COPY target/quarkus-app/quarkus/ /work/quarkus/
+
+# Expose the default port
+EXPOSE 8080
+
+# Run the application
+CMD ["-jar", "quarkus-run.jar"]
