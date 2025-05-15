@@ -22,15 +22,6 @@ jobs:
           cd lambda-pom/quarkus-lambda
           mvn package -DskipTests
 
-      - name: Prepare artifact directory
-        run: |
-          mkdir -p artifact_dir
-          cp lambda-pom/quarkus-lambda/target/quarkus-app/lib/boot/*.jar artifact_dir/bootstrap.jar
-          cp lambda-pom/quarkus-lambda/target/quarkus-app/quarkus-run.jar artifact_dir/
-          cp -r lambda-pom/quarkus-lambda/target/quarkus-app/lib/ artifact_dir/lib/
-          cp -r lambda-pom/quarkus-lambda/target/quarkus-app/app/ artifact_dir/app/
-          cp -r lambda-pom/quarkus-lambda/target/quarkus-app/quarkus/ artifact_dir/quarkus/
-
       - name: Upload quarkus-run.jar
         uses: actions/upload-artifact@v4
         with:
@@ -45,14 +36,3 @@ jobs:
           path: artifact_dir/
           retention-days: 7
 
-      - name: Create deployable ZIP
-        run: |
-          cd artifact_dir
-          zip -r ../function-jvm.zip .
-
-      - name: Upload function.zip for AWS Lambda
-        uses: actions/upload-artifact@v4
-        with:
-          name: function-jvm.zip
-          path: function-jvm.zip
-          retention-days: 7
