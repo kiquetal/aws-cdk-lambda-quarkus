@@ -1,0 +1,13 @@
+# Use a minimal base image for native executables
+FROM quay.io/quarkus/quarkus-micro-image:2.0
+
+WORKDIR /work/
+
+# Copy the native executable (built with GraalVM)
+COPY target/quarkus-lambda-1.0-SNAPSHOT-runner /work/application
+
+# Expose the default port
+EXPOSE 8080
+
+# Run the native executable
+CMD ["./application"]
